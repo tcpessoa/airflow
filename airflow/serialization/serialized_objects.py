@@ -47,6 +47,16 @@ except ImportError:
 if TYPE_CHECKING:
     from inspect import Parameter
 
+try:
+    # isort: off
+    from kubernetes.client import models as k8s
+    from airflow.kubernetes.pod_generator import PodGenerator
+
+    # isort: on
+    HAS_KUBERNETES = True
+except ImportError:
+    HAS_KUBERNETES = False
+
 log = logging.getLogger(__name__)
 
 
@@ -199,6 +209,9 @@ class BaseSerialization:
                 return [cls._serialize(v) for v in var]
             elif isinstance(var, DAG):
                 return SerializedDAG.serialize_dag(var)
+            elif HAS_KUBERNETES and isinstance(var, k8s.V1Pod):
+                json_pod = PodGenerator.serialize_pod(var)
+                return cls._encode(json_pod, type_=DAT.POD)
             elif isinstance(var, BaseOperator):
                 return SerializedBaseOperator.serialize_operator(var)
             elif isinstance(var, cls._datetime_types):
@@ -253,6 +266,11 @@ class BaseSerialization:
             return SerializedBaseOperator.deserialize_operator(var)
         elif type_ == DAT.DATETIME:
             return pendulum.from_timestamp(var)
+        elif type_ == DAT.POD:
+            if not HAS_KUBERNETES:
+                raise RuntimeError("Cannot deserialize POD objects without kubernetes libraries installed!")
+            pod = PodGenerator.deserialize_model_dict(var)
+            return pod
         elif type_ == DAT.TIMEDELTA:
             return datetime.timedelta(seconds=var)
         elif type_ == DAT.TIMEZONE:

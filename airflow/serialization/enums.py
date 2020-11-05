@@ -36,10 +36,12 @@ class DagAttributeTypes(str, Enum):
     """Enum of supported attribute types of DAG."""
     DAG = 'dag'
     OP = 'operator'
+
     DATETIME = 'datetime'
     TIMEDELTA = 'timedelta'
     TIMEZONE = 'timezone'
     RELATIVEDELTA = 'relativedelta'
     DICT = 'dict'
+    POD = 'k8s.V1Pod'
     SET = 'set'
     TUPLE = 'tuple'

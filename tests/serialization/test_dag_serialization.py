@@ -259,6 +259,14 @@ class TestStringifiedDAGs(unittest.TestCase):
 
         assert sorted_serialized_dag(ground_truth_dag) == sorted_serialized_dag(json_dag)
 
+    def test_deser_k8s_pod_override(self):
+        dag = collect_dags('airflow/example_dags')['example_kubernetes_executor_config']
+        serialized = SerializedDAG.to_json(dag)
+        deser_dag = SerializedDAG.from_json(serialized)
+        p1 = dag.tasks[1].executor_config
+        p2 = deser_dag.tasks[1].executor_config
+        self.assertDictEqual(p1['pod_override'].to_dict(), p2['pod_override'].to_dict())
+
     def test_deserialization_across_process(self):
         """A serialized DAG can be deserialized in another process."""
 
